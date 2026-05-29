@@ -1,0 +1,9 @@
+# Ignore ASP.NET compiled files
+Backend-ASPNET/**/bin/
+Backend-ASPNET/**/obj/
+Backend-ASPNET/.vs/
+*.user
+
+# Ignore Mac/Windows system files
+.DS_Store
+Thumbs.db

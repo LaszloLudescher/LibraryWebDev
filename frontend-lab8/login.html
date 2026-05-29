@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login – Personal Library</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#e8f0fe; margin:0; }
+        .login-card { background:#fff; padding:40px 44px; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,.15); max-width:380px; width:92%; }
+        .login-card h2 { text-align:center; margin-bottom:22px; color:#333; }
+        .login-card .logo { text-align:center; font-size:2.5rem; margin-bottom:6px; }
+        .error-msg { color:#b71c1c; background:#ffebee; border:1px solid #ef9a9a; border-radius:4px; padding:8px 12px; font-size:.88rem; margin-bottom:14px; display:none; }
+        .btn-block { width:100%; padding:11px; margin-top:4px; }
+        .switch { text-align:center; margin-top:14px; font-size:.88rem; color:#666; }
+        .switch a { color:#0056b3; font-weight:600; }
+        .hint { text-align:center; font-size:.76rem; color:#999; margin-top:8px; }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <div class="logo">📚</div>
+    <h2>Personal Library</h2>
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="form-group">
+        <label>Username:</label>
+        <input type="text" id="username" autocomplete="username" placeholder="Enter username" style="width:100%">
+    </div>
+    <div class="form-group">
+        <label>Password:</label>
+        <input type="password" id="password" autocomplete="current-password" placeholder="Enter password" style="width:100%">
+    </div>
+    <button class="btn btn-success btn-block" onclick="doLogin()">Sign In</button>
+    <p class="switch">No account? <a href="register.html">Register here</a></p>
+    <p class="hint">Default: admin / admin123</p>
+</div>
+
+<script src="config.js"></script>
+<script>
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+});
+
+function doLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const errorMsg = document.getElementById('errorMsg');
+    errorMsg.style.display = 'none';
+
+    if (!username || !password) {
+        errorMsg.textContent = 'Please enter username and password.';
+        errorMsg.style.display = 'block';
+        return;
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', BASE_URL + '/api/auth/login', true);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function () {
+        if (this.status === 200) {
+            window.location.href = 'index.html';
+        } else {
+            const data = JSON.parse(this.responseText || '{}');
+            errorMsg.textContent = data.error || 'Invalid username or password.';
+            errorMsg.style.display = 'block';
+        }
+    };
+    xhr.onerror = function () {
+        errorMsg.textContent = 'Cannot reach backend at ' + BASE_URL + '. Is it running?';
+        errorMsg.style.display = 'block';
+    };
+    xhr.send(JSON.stringify({ username, password }));
+}
+</script>
+</body>
+</html>

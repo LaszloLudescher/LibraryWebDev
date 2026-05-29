@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register – Personal Library</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:#e8f0fe; margin:0; }
+        .login-card { background:#fff; padding:40px 44px; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,.15); max-width:400px; width:92%; }
+        .login-card h2 { text-align:center; margin-bottom:22px; color:#333; }
+        .login-card .logo { text-align:center; font-size:2.5rem; margin-bottom:6px; }
+        .error-msg  { color:#b71c1c; background:#ffebee; border:1px solid #ef9a9a; border-radius:4px; padding:8px 12px; font-size:.88rem; margin-bottom:14px; display:none; }
+        .hint-text  { font-size:.76rem; color:#888; margin-top:3px; display:block; }
+        .btn-block  { width:100%; padding:11px; margin-top:4px; }
+        .switch     { text-align:center; margin-top:14px; font-size:.88rem; color:#666; }
+        .switch a   { color:#0056b3; font-weight:600; }
+    </style>
+</head>
+<body>
+<div class="login-card">
+    <div class="logo">📚</div>
+    <h2>Create Account</h2>
+    <div class="error-msg" id="errorMsg"></div>
+    <div class="form-group">
+        <label>Username:</label>
+        <input type="text" id="username" autocomplete="username" placeholder="Letters, numbers, underscore" style="width:100%">
+        <span class="hint-text">3–50 characters</span>
+    </div>
+    <div class="form-group">
+        <label>Password:</label>
+        <input type="password" id="password" autocomplete="new-password" placeholder="At least 6 characters" style="width:100%">
+    </div>
+    <div class="form-group">
+        <label>Confirm Password:</label>
+        <input type="password" id="confirm" autocomplete="new-password" placeholder="Repeat password" style="width:100%">
+    </div>
+    <button class="btn btn-success btn-block" onclick="doRegister()">Create Account</button>
+    <p class="switch">Already have an account? <a href="login.html">Sign in</a></p>
+</div>
+
+<script src="config.js"></script>
+<script>
+function doRegister() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const confirm  = document.getElementById('confirm').value;
+    const errorMsg = document.getElementById('errorMsg');
+    errorMsg.style.display = 'none';
+
+    if (!username || username.length < 3) {
+        showError('Username must be at least 3 characters.'); return;
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+        showError('Username: only letters, numbers and underscores.'); return;
+    }
+    if (password.length < 6) {
+        showError('Password must be at least 6 characters.'); return;
+    }
+    if (password !== confirm) {
+        showError('Passwords do not match.'); return;
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', BASE_URL + '/api/auth/register', true);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function () {
+        if (this.status === 200 || this.status === 201) {
+            window.location.href = 'index.html';
+        } else {
+            const data = JSON.parse(this.responseText || '{}');
+            showError(data.error || 'Registration failed.');
+        }
+    };
+    xhr.send(JSON.stringify({ username, password }));
+
+    function showError(msg) { errorMsg.textContent = msg; errorMsg.style.display = 'block'; }
+}
+</script>
+</body>
+</html>

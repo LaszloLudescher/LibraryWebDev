@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lend Book – Personal Library</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="nav">
+    <a href="index.html">Browse Books</a>
+    <a href="add.html">Add New Book</a>
+    <span id="navUser" style="float:right;color:#555;font-size:.9em"></span>
+    <button class="btn btn-sm" id="logoutBtn" style="float:right;display:none" onclick="logout()">Logout</button>
+</div>
+
+<div id="pageContent"><p>Loading…</p></div>
+
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script>
+const params        = new URLSearchParams(window.location.search);
+const bookId        = params.get('id');
+const currentStatus = parseInt(params.get('current_status')); // 1=lent, 0=available
+
+window.onload = function () {
+    requireAuth(function () {
+        if (!bookId) { window.location.href = 'index.html'; return; }
+        renderPage();
+    });
+};
+
+function renderPage() {
+    // Fetch book details to show the title
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', BASE_URL + '/api/books/' + bookId, true);
+    xhr.withCredentials = true;
+    xhr.onload = function () {
+        if (this.status !== 200) { window.location.href = 'index.html'; return; }
+        const b = JSON.parse(this.responseText);
+        const isLent = currentStatus === 1;
+
+        let html = `<h2>${isLent ? 'Return Book' : 'Lend Book'}</h2>
+            <p>Book: <strong>${esc(b.title)}</strong> by ${esc(b.author)}</p>`;
+
+        if (isLent) {
+            html += `<p>This book is currently lent out${b.lent_to ? ' to <strong>' + esc(b.lent_to) + '</strong>' : ''}.</p>
+                <p>Mark it as returned?</p>
+                <button class="btn btn-success" onclick="doLend(null)">Mark Returned</button>
+                <a href="index.html" class="btn" onclick="return confirm('Cancel and go back?')">Cancel</a>`;
+        } else {
+            html += `<p>Who are you lending this book to?</p>
+                <div class="form-group">
+                    <label>Borrower name:</label>
+                    <input type="text" id="lentTo" maxlength="100" placeholder="Enter name" required>
+                    <span id="lentToErr" style="color:red;font-size:.85em;display:none">Please enter a name.</span>
+                </div>
+                <button class="btn btn-success" onclick="submitLend()">Confirm Lend</button>
+                <a href="index.html" class="btn" onclick="return confirm('Cancel and go back?')">Cancel</a>`;
+        }
+        document.getElementById('pageContent').innerHTML = html;
+    };
+    xhr.send();
+}
+
+function submitLend() {
+    const lentTo = document.getElementById('lentTo').value.trim();
+    if (!lentTo) {
+        document.getElementById('lentToErr').style.display = 'inline';
+        return;
+    }
+    doLend(lentTo);
+}
+
+function doLend(lentTo) {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PATCH', BASE_URL + '/api/books/' + bookId + '/lend', true);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function () {
+        if (this.status === 401) { window.location.href = 'login.html'; return; }
+        window.location.href = 'index.html';
+    };
+    xhr.send(JSON.stringify({ lent_to: lentTo }));
+}
+
+function esc(s) {
+    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

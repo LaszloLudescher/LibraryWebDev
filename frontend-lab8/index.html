@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Personal Library Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="nav">
+    <a href="index.html">Browse Books</a>
+    <a href="add.html">Add New Book</a>
+    <span id="navUser" style="float:right;color:#555;font-size:.9em"></span>
+    <button class="btn btn-sm" id="logoutBtn" style="float:right;display:none" onclick="logout()">Logout</button>
+</div>
+
+<h2>Library Dashboard</h2>
+
+<div class="form-group">
+    <label for="genreFilter">Filter Genre:</label>
+    <select id="genreFilter">
+        <option value="">All Categories</option>
+        <option value="Fiction">Fiction</option>
+        <option value="Non-Fiction">Non-Fiction</option>
+        <option value="Sci-Fi">Sci-Fi</option>
+        <option value="Fantasy">Fantasy</option>
+    </select>
+    <button class="btn" onclick="fetchBooks()">Apply Filter</button>
+</div>
+
+<p id="lastFilterDisplay" style="color:#666;font-style:italic;font-size:.9em;"></p>
+
+<div id="booksContainer"></div>
+
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script>
+function fetchBooks() {
+    const genre = document.getElementById('genreFilter').value;
+
+    // Show previous filter BEFORE updating storage
+    const prev = localStorage.getItem('lastLibraryFilter');
+    const displayValue = (prev !== null) ? prev : 'None (First Visit)';
+    document.getElementById('lastFilterDisplay').innerText =
+        'Filter used for the previous browsing action: ' + displayValue;
+
+    localStorage.setItem('lastLibraryFilter', genre === '' ? 'All Categories' : genre);
+
+    document.getElementById('booksContainer').innerHTML = '<p>Loading…</p>';
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', BASE_URL + '/api/books' + (genre ? '?genre=' + encodeURIComponent(genre) : ''), true);
+    xhr.withCredentials = true;
+    xhr.onload = function () {
+        if (this.status === 401) { window.location.href = 'login.html'; return; }
+        if (this.status === 200) {
+            renderBooks(JSON.parse(this.responseText));
+        }
+    };
+    xhr.send();
+}
+
+function renderBooks(books) {
+    const container = document.getElementById('booksContainer');
+    if (!books.length) { container.innerHTML = '<p>No books found in this category.</p>'; return; }
+
+    let html = `<table>
+        <tr><th>Title</th><th>Author</th><th>Pages</th><th>Genre</th><th>Status</th><th>Actions</th></tr>`;
+    books.forEach(b => {
+        const status = b.is_lent
+            ? "<span style='color:red'>Lent Out</span>"
+            : "<span style='color:green'>Available</span>";
+        const lendLabel = b.is_lent ? 'Mark Returned' : 'Lend Book';
+        const lendClass = b.is_lent ? 'btn-success' : 'btn';
+        html += `<tr>
+            <td>${esc(b.title)}</td>
+            <td>${esc(b.author)}</td>
+            <td>${b.pages}</td>
+            <td>${esc(b.genre)}</td>
+            <td>${status}</td>
+            <td>
+                <a href="edit.html?id=${b.id}" class="btn">Edit</a>
+                <a href="lend.html?id=${b.id}&current_status=${b.is_lent ? 1 : 0}" class="btn ${lendClass}">${lendLabel}</a>
+                <button onclick="confirmDelete(${b.id},'${escJs(b.title)}')" class="btn btn-danger">Delete</button>
+            </td>
+        </tr>`;
+    });
+    html += '</table>';
+    container.innerHTML = html;
+}
+
+function confirmDelete(id, title) {
+    if (confirm('Are you sure you want to delete "' + title + '"?\nThis action cannot be undone.')) {
+        const xhr = new XMLHttpRequest();
+        xhr.open('DELETE', BASE_URL + '/api/books/' + id, true);
+        xhr.withCredentials = true;
+        xhr.onload = function () {
+            if (this.status === 401) { window.location.href = 'login.html'; return; }
+            fetchBooks();
+        };
+        xhr.send();
+    }
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escJs(s) { return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
+
+window.onload = function () {
+    requireAuth(function () {
+        // Restore last filter selection
+        const saved = localStorage.getItem('lastLibraryFilter');
+        if (saved && saved !== 'All Categories') {
+            const sel = document.getElementById('genreFilter');
+            for (let i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value === saved) { sel.selectedIndex = i; break; }
+            }
+        }
+        fetchBooks();
+    });
+};
+</script>
+</body>
+</html>

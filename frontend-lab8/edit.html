@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Book – Personal Library</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="nav">
+    <a href="index.html">Browse Books</a>
+    <a href="add.html">Add New Book</a>
+    <span id="navUser" style="float:right;color:#555;font-size:.9em"></span>
+    <button class="btn btn-sm" id="logoutBtn" style="float:right;display:none" onclick="logout()">Logout</button>
+</div>
+
+<h2>Edit Book Details</h2>
+<p id="errorMsg" style="color:red;font-weight:bold;display:none"></p>
+
+<form onsubmit="return submitEdit(event)">
+    <div class="form-group">
+        <label>Title:</label>
+        <input type="text" id="title" required maxlength="200">
+    </div>
+    <div class="form-group">
+        <label>Author:</label>
+        <input type="text" id="author" required maxlength="150">
+    </div>
+    <div class="form-group">
+        <label>Pages:</label>
+        <input type="number" id="pages" required min="1" max="10000">
+    </div>
+    <div class="form-group">
+        <label>Genre:</label>
+        <select id="genre" required>
+            <option value="">Select Genre...</option>
+            <option value="Fiction">Fiction</option>
+            <option value="Non-Fiction">Non-Fiction</option>
+            <option value="Sci-Fi">Sci-Fi</option>
+            <option value="Fantasy">Fantasy</option>
+        </select>
+    </div>
+    <button type="submit" class="btn btn-success">Update Book</button>
+    <a href="index.html" class="btn" onclick="return confirm('Discard edits and return to browsing?')">Cancel</a>
+</form>
+
+<script src="config.js"></script>
+<script src="auth.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const bookId = params.get('id');
+
+window.onload = function () {
+    requireAuth(function () {
+        if (!bookId) { alert('No book ID provided.'); window.location.href = 'index.html'; return; }
+        loadBook();
+    });
+};
+
+function loadBook() {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', BASE_URL + '/api/books/' + bookId, true);
+    xhr.withCredentials = true;
+    xhr.onload = function () {
+        if (this.status === 401) { window.location.href = 'login.html'; return; }
+        if (this.status === 200) {
+            const b = JSON.parse(this.responseText);
+            document.getElementById('title').value  = b.title;
+            document.getElementById('author').value = b.author;
+            document.getElementById('pages').value  = b.pages;
+            // Set genre dropdown
+            const sel = document.getElementById('genre');
+            for (let i = 0; i < sel.options.length; i++) {
+                if (sel.options[i].value === b.genre) { sel.selectedIndex = i; break; }
+            }
+        } else {
+            alert('Book not found.'); window.location.href = 'index.html';
+        }
+    };
+    xhr.send();
+}
+
+function submitEdit(e) {
+    e.preventDefault();
+    const title  = document.getElementById('title').value.trim();
+    const author = document.getElementById('author').value.trim();
+    const pages  = parseInt(document.getElementById('pages').value);
+    const genre  = document.getElementById('genre').value;
+    const err    = document.getElementById('errorMsg');
+    err.style.display = 'none';
+
+    if (!title || !author || !genre || !(pages > 0)) {
+        err.textContent = 'All fields are required, and pages must be greater than 0.';
+        err.style.display = 'block';
+        return false;
+    }
+    if (!confirm('Save these changes?')) return false;
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', BASE_URL + '/api/books/' + bookId, true);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.onload = function () {
+        if (this.status === 401) { window.location.href = 'login.html'; return; }
+        if (this.status === 200) {
+            window.location.href = 'index.html';
+        } else {
+            err.textContent = 'Failed to update book. Please try again.';
+            err.style.display = 'block';
+        }
+    };
+    xhr.send(JSON.stringify({ title, author, pages, genre }));
+}
+</script>
+</body>
+</html>
