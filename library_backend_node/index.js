@@ -26,6 +26,8 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:5500',
 ];
 
+const LOGIN_TIMEOUT = 8 * 60 * 60 * 1000; // 8 hours
+
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
@@ -36,7 +38,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type'],
 }));
 
-app.options('*', cors());  // pre-flight for all routes
+app.options(/.*/, cors());  // pre-flight for all routes
 
 app.use(express.json());
 
@@ -47,7 +49,7 @@ app.use(session({
   cookie: {
     httpOnly: true,
     sameSite: 'lax',
-    maxAge: 8 * 60 * 60 * 1000, // 8 hours
+    maxAge: LOGIN_TIMEOUT
   },
 }));
 
@@ -159,7 +161,7 @@ app.post('/api/auth', async (req, res) => {
 
 // GET /api/books          — list (optional ?genre=)
 // GET /api/books/:id      — single book
-app.get('/api/books/:id?', requireAuth, async (req, res) => {
+app.get('/api/books{/:id}', requireAuth, async (req, res) => {
   try {
     if (req.params.id) {
       const [rows] = await pool.query('SELECT * FROM books WHERE id = ?', [req.params.id]);
