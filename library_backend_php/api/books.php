@@ -1,13 +1,8 @@
 <?php
-// api/books.php
-// Place this file at: htdocs/library/api/books.php
-// Handles: GET (list/single), POST, PUT, DELETE
-// Lend toggle is handled by api/books_lend.php
 
 require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../db.php';
 
-// Auth guard
 if (empty($_SESSION['username'])) {
     http_response_code(401);
     echo json_encode(['error' => 'Not authenticated.']);
@@ -15,10 +10,8 @@ if (empty($_SESSION['username'])) {
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
-// ID comes from query string: /api/books.php?id=5
 $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
-// ── GET /api/books.php  or  /api/books.php?id=5 ──────────────────────────────
 if ($method === 'GET') {
     if ($id) {
         $stmt = $pdo->prepare("SELECT * FROM books WHERE id = ?");
@@ -39,7 +32,6 @@ if ($method === 'GET') {
     exit;
 }
 
-// ── POST /api/books.php ───────────────────────────────────────────────────────
 if ($method === 'POST') {
     $data  = json_decode(file_get_contents('php://input'), true);
     $title  = trim($data['title']  ?? '');
@@ -64,7 +56,6 @@ if ($method === 'POST') {
     exit;
 }
 
-// ── PUT /api/books.php?id=5 ───────────────────────────────────────────────────
 if ($method === 'PUT') {
     if (!$id) { http_response_code(400); echo json_encode(['error' => 'ID required.']); exit; }
 
@@ -91,7 +82,6 @@ if ($method === 'PUT') {
     exit;
 }
 
-// ── DELETE /api/books.php?id=5 ────────────────────────────────────────────────
 if ($method === 'DELETE') {
     if (!$id) { http_response_code(400); echo json_encode(['error' => 'ID required.']); exit; }
 
@@ -104,7 +94,6 @@ if ($method === 'DELETE') {
 http_response_code(405);
 echo json_encode(['error' => 'Method not allowed.']);
 
-// ── Helper ────────────────────────────────────────────────────────────────────
 function mapBook(array $row): array {
     return [
         'id'      => (int)$row['id'],

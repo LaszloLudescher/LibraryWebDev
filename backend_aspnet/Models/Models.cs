@@ -27,7 +27,6 @@ namespace LibraryBackend.Models
         [Required(ErrorMessage = "Genre is required")]
         public string Genre { get; set; } = "";
 
-        // is_lent uses snake_case to match the PHP API shape the frontend already uses
         [JsonPropertyName("is_lent")]
         public bool IsLent { get; set; }
 

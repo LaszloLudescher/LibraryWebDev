@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# 1. Route Auth calls (e.g., /api/auth/login -> /api/auth.php?action=login)
+RewriteRule ^api/auth/([a-zA-Z0-9_-]+)$ api/auth.php?action=$1 [QSA,L]
+
+# 2. Route Book Lending (e.g., /api/books/5/lend -> /api/books_lend.php?id=5)
+RewriteRule ^api/books/([0-9]+)/lend$ api/books_lend.php?id=$1 [QSA,L]
+
+# 3. Route Single Book operations (e.g., /api/books/5 -> /api/books.php?id=5)
+RewriteRule ^api/books/([0-9]+)$ api/books.php?id=$1 [QSA,L]
+
+# 4. Route General Book operations (e.g., /api/books -> /api/books.php)
+RewriteRule ^api/books$ api/books.php [QSA,L]
+</IfModule>

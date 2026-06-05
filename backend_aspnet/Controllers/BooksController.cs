@@ -13,7 +13,6 @@ namespace LibraryBackend.Controllers
 
         private bool IsAuthenticated => HttpContext.Session.GetString("Username") != null;
 
-        // GET /api/books?genre=Fiction
         [HttpGet]
         public IActionResult GetBooks([FromQuery] string? genre)
         {
@@ -21,7 +20,6 @@ namespace LibraryBackend.Controllers
             return Ok(_db.GetBooks(genre));
         }
 
-        // GET /api/books/5
         [HttpGet("{id}")]
         public IActionResult GetBook(long id)
         {
@@ -31,7 +29,6 @@ namespace LibraryBackend.Controllers
             return Ok(book);
         }
 
-        // POST /api/books
         [HttpPost]
         public IActionResult AddBook([FromBody] Book model)
         {
@@ -43,7 +40,6 @@ namespace LibraryBackend.Controllers
             return CreatedAtAction(nameof(GetBook), new { id }, model);
         }
 
-        // PUT /api/books/5
         [HttpPut("{id}")]
         public IActionResult UpdateBook(long id, [FromBody] Book model)
         {
@@ -57,7 +53,6 @@ namespace LibraryBackend.Controllers
             return Ok(model);
         }
 
-        // DELETE /api/books/5
         [HttpDelete("{id}")]
         public IActionResult DeleteBook(long id)
         {
@@ -69,7 +64,6 @@ namespace LibraryBackend.Controllers
             return Ok(new { message = "Deleted." });
         }
 
-        // PATCH /api/books/5/lend
         [HttpPatch("{id}/lend")]
         public IActionResult ToggleLend(long id, [FromBody] LendRequest req)
         {

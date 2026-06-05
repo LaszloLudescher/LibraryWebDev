@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "OF0CL+94BFg=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\laszlo\\Documents\\1UNI\\4_szemeszter\\web\\asg8\\library-web-dev\\backend_aspnet\\backend_aspnet.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\laszlo\\.nuget\\packages\\bcrypt.net-next\\4.2.0\\bcrypt.net-next.4.2.0.nupkg.sha512",
+    "C:\\Users\\laszlo\\.nuget\\packages\\dapper\\2.1.79\\dapper.2.1.79.nupkg.sha512",
+    "C:\\Users\\laszlo\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.2\\microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
+    "C:\\Users\\laszlo\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.2\\microsoft.extensions.logging.abstractions.8.0.2.nupkg.sha512",
+    "C:\\Users\\laszlo\\.nuget\\packages\\mysqlconnector\\2.5.0\\mysqlconnector.2.5.0.nupkg.sha512"
+  ],
+  "logs": []
+}

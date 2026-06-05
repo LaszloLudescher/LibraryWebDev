@@ -1,16 +1,11 @@
 <?php
-// api/auth.php
-// Place this file at: htdocs/library/api/auth.php
-// Also copy cors.php and db.php one level up.
 
 require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../db.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
-// Read sub-action from URL: /api/auth.php?action=login|logout|register|status
 $action = $_GET['action'] ?? '';
 
-// ── GET /api/auth.php?action=status ──────────────────────────────────────────
 if ($method === 'GET' && $action === 'status') {
     if (!empty($_SESSION['username'])) {
         echo json_encode(['authenticated' => true, 'username' => $_SESSION['username']]);
@@ -20,7 +15,6 @@ if ($method === 'GET' && $action === 'status') {
     exit;
 }
 
-// ── POST /api/auth.php?action=login ──────────────────────────────────────────
 if ($method === 'POST' && $action === 'login') {
     $data = json_decode(file_get_contents('php://input'), true);
     $username = trim($data['username'] ?? '');
@@ -46,14 +40,12 @@ if ($method === 'POST' && $action === 'login') {
     exit;
 }
 
-// ── POST /api/auth.php?action=logout ─────────────────────────────────────────
 if ($method === 'POST' && $action === 'logout') {
     session_destroy();
     echo json_encode(['message' => 'Logged out.']);
     exit;
 }
 
-// ── POST /api/auth.php?action=register ───────────────────────────────────────
 if ($method === 'POST' && $action === 'register') {
     $data = json_decode(file_get_contents('php://input'), true);
     $username = trim($data['username'] ?? '');
@@ -70,7 +62,6 @@ if ($method === 'POST' && $action === 'register') {
         exit;
     }
 
-    // Check duplicate
     $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ?");
     $stmt->execute([$username]);
     if ($stmt->fetch()) {

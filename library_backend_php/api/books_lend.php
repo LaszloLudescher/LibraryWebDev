@@ -1,7 +1,5 @@
 <?php
-// api/books_lend.php
-// PATCH /api/books_lend.php?id=5
-// Body: { "lent_to": "John" }  (null = mark as returned)
+
 
 require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../db.php';

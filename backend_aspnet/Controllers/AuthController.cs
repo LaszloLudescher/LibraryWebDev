@@ -11,7 +11,6 @@ namespace LibraryBackend.Controllers
         private readonly LibraryDb _db;
         public AuthController(LibraryDb db) { _db = db; }
 
-        // POST /api/auth/login
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequest req)
         {
@@ -25,7 +24,6 @@ namespace LibraryBackend.Controllers
             return Ok(new { username = req.Username, message = "Logged in." });
         }
 
-        // POST /api/auth/logout
         [HttpPost("logout")]
         public IActionResult Logout()
         {
@@ -33,7 +31,6 @@ namespace LibraryBackend.Controllers
             return Ok(new { message = "Logged out." });
         }
 
-        // POST /api/auth/register
         [HttpPost("register")]
         public IActionResult Register([FromBody] RegisterRequest req)
         {
@@ -54,7 +51,6 @@ namespace LibraryBackend.Controllers
             return Ok(new { username = req.Username, message = "Registered." });
         }
 
-        // GET /api/auth/status
         [HttpGet("status")]
         public IActionResult Status()
         {
