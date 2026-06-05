@@ -7,7 +7,6 @@ const mysql   = require('mysql2/promise');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Database pool ─────────────────────────────────────────────────────────────
 const pool = mysql.createPool({
   host:     process.env.DB_HOST     || 'localhost',
   user:     process.env.DB_USER     || 'root',
@@ -18,7 +17,6 @@ const pool = mysql.createPool({
   connectionLimit: 10,
 });
 
-// ── Middleware ────────────────────────────────────────────────────────────────
 const ALLOWED_ORIGINS = [
   'http://localhost',
   'http://localhost:8080',
@@ -26,19 +24,19 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:5500',
 ];
 
-const LOGIN_TIMEOUT = 8 * 60 * 60 * 1000; // 8 hours
+const LOGIN_TIMEOUT = 8 * 60 * 1000;
 
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    cb(null, true); // allow all during dev (mirrors PHP behaviour)
+    cb(null, true); 
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
 }));
 
-app.options(/.*/, cors());  // pre-flight for all routes
+app.options(/.*/, cors());  
 
 app.use(express.json());
 
@@ -53,13 +51,11 @@ app.use(session({
   },
 }));
 
-// ── Auth guard middleware ─────────────────────────────────────────────────────
 function requireAuth(req, res, next) {
   if (req.session && req.session.username) return next();
   return res.status(401).json({ error: 'Not authenticated.' });
 }
 
-// ── Helper: map DB row → API shape ────────────────────────────────────────────
 function mapBook(row) {
   return {
     id:      Number(row.id),
@@ -72,13 +68,10 @@ function mapBook(row) {
   };
 }
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  AUTH  /api/auth
-// ═════════════════════════════════════════════════════════════════════════════
 
-// GET /api/auth?action=status
-app.get('/api/auth', (req, res) => {
-  const action = req.query.action;
+app.get(['/api/auth', '/api/auth/:action'], (req, res) => {
+  const action = req.params.action || req.query.action;
+  
   if (action === 'status') {
     if (req.session.username) {
       return res.json({ authenticated: true, username: req.session.username });
@@ -88,11 +81,9 @@ app.get('/api/auth', (req, res) => {
   res.status(404).json({ error: 'Not found.' });
 });
 
-// POST /api/auth?action=login|logout|register
-app.post('/api/auth', async (req, res) => {
-  const action = req.query.action;
+app.post(['/api/auth', '/api/auth/:action'], async (req, res) => {
+  const action = req.params.action || req.query.action;
 
-  // ── LOGIN ──────────────────────────────────────────────────────────────────
   if (action === 'login') {
     const { username = '', password = '' } = req.body;
     if (!username.trim() || !password) {
@@ -114,7 +105,6 @@ app.post('/api/auth', async (req, res) => {
     }
   }
 
-  // ── LOGOUT ─────────────────────────────────────────────────────────────────
   if (action === 'logout') {
     req.session.destroy(() => {
       res.json({ message: 'Logged out.' });
@@ -122,7 +112,6 @@ app.post('/api/auth', async (req, res) => {
     return;
   }
 
-  // ── REGISTER ───────────────────────────────────────────────────────────────
   if (action === 'register') {
     const { username = '', password = '' } = req.body;
     if (username.trim().length < 3) {
@@ -155,13 +144,7 @@ app.post('/api/auth', async (req, res) => {
   res.status(404).json({ error: 'Not found.' });
 });
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  BOOKS  /api/books
-// ═════════════════════════════════════════════════════════════════════════════
-
-// GET /api/books          — list (optional ?genre=)
-// GET /api/books/:id      — single book
-app.get('/api/books{/:id}', requireAuth, async (req, res) => {
+app.get(['/api/books', '/api/books/:id'], requireAuth, async (req, res) => {
   try {
     if (req.params.id) {
       const [rows] = await pool.query('SELECT * FROM books WHERE id = ?', [req.params.id]);
@@ -185,7 +168,6 @@ app.get('/api/books{/:id}', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/books — create
 app.post('/api/books', requireAuth, async (req, res) => {
   const { title = '', author = '', pages, genre = '' } = req.body;
   if (!title.trim() || !author.trim() || !Number(pages) || Number(pages) < 1 || !genre.trim()) {
@@ -204,7 +186,6 @@ app.post('/api/books', requireAuth, async (req, res) => {
   }
 });
 
-// PUT /api/books/:id — update
 app.put('/api/books/:id', requireAuth, async (req, res) => {
   const id = Number(req.params.id);
   const { title = '', author = '', pages, genre = '' } = req.body;
@@ -225,7 +206,6 @@ app.put('/api/books/:id', requireAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/books/:id
 app.delete('/api/books/:id', requireAuth, async (req, res) => {
   try {
     await pool.query('DELETE FROM books WHERE id = ?', [req.params.id]);
@@ -236,13 +216,9 @@ app.delete('/api/books/:id', requireAuth, async (req, res) => {
   }
 });
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  BOOKS LEND  /api/books_lend
-// ═════════════════════════════════════════════════════════════════════════════
-
-// POST /api/books_lend?id=:id   — toggle lend status  (mirrors PHP books_lend.php)
-app.post('/api/books_lend', requireAuth, async (req, res) => {
-  const id = Number(req.query.id);
+app.patch(['/api/books_lend', '/api/books/:id/lend'], requireAuth, async (req, res) => {
+  const id = Number(req.params.id || req.query.id);
+  
   if (!id) return res.status(400).json({ error: 'ID required.' });
 
   try {
@@ -266,9 +242,6 @@ app.post('/api/books_lend', requireAuth, async (req, res) => {
   }
 });
 
-// ═════════════════════════════════════════════════════════════════════════════
-//  Start
-// ═════════════════════════════════════════════════════════════════════════════
 app.listen(PORT, () => {
   console.log(`Library Node.js backend running on http://localhost:${PORT}`);
   console.log('Database:', process.env.DB_NAME || 'library_db');
